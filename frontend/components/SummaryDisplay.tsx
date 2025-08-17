@@ -5,10 +5,11 @@ import axios from 'axios'
 import { Download, Share2, Copy, Sparkles } from 'lucide-react'
 import EnhancedEditor from './EnhancedEditor'
 
-interface SummaryDisplayProps {
+export interface SummaryDisplayProps {
   summary: string
-  sessionId: string
-  onSummaryUpdate?: (summary: string) => void
+  onEdit: (summary: string) => void
+  onDownload: () => void
+  onShare: () => void
   isLoading: boolean
 }
 
@@ -16,8 +17,9 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
 
 export default function SummaryDisplay({
   summary,
-  sessionId,
-  onSummaryUpdate,
+  onEdit,
+  onDownload,
+  onShare,
   isLoading,
 }: SummaryDisplayProps) {
   const [isSharing, setIsSharing] = useState(false)
@@ -33,52 +35,12 @@ export default function SummaryDisplay({
     }
   }
 
-  const handleDownload = async (format: string) => {
-    try {
-      const response = await axios.post(`${API_URL}/api/export/export`, {
-        content: summary,
-        format,
-        options: {
-          title: 'Meeting Summary',
-          includeMetadata: true
-        }
-      }, {
-        responseType: 'blob'
-      })
 
-      const url = window.URL.createObjectURL(new Blob([response.data]))
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `summary-${sessionId}.${format}`
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      window.URL.revokeObjectURL(url)
-    } catch (error) {
-      console.error('Error downloading:', error)
-      alert('Failed to download file')
-    }
-  }
 
-  const handleShare = async () => {
-    try {
-      const response = await axios.post(`${API_URL}/api/share/create`, {
-        content: summary,
-        type: 'summary',
-        title: 'Meeting Summary'
-      })
-      
-      const shareUrl = `${window.location.origin}/share/${response.data.shareId}`
-      setShareUrl(shareUrl)
-      setIsSharing(true)
-    } catch (error) {
-      console.error('Error creating share:', error)
-      alert('Failed to create share link')
-    }
-  }
+
 
   const handleSummaryUpdate = (newSummary: string) => {
-    onSummaryUpdate?.(newSummary)
+    onEdit(newSummary)
   }
 
   const wordCount = summary.trim().split(/\s+/).filter(word => word.length > 0).length
@@ -108,21 +70,17 @@ export default function SummaryDisplay({
             <span className="whitespace-nowrap">Copy</span>
           </button>
           
-          <select
-            onChange={(e) => e.target.value && handleDownload(e.target.value)}
-            className="px-2 py-1 sm:px-3 sm:py-1 bg-green-500 text-white rounded hover:bg-green-600 text-xs sm:text-sm flex-shrink-0"
-            defaultValue=""
+          <button
+            onClick={onDownload}
+            className="flex items-center space-x-1 px-2 py-1 sm:px-3 sm:py-1 bg-green-500 text-white rounded hover:bg-green-600 text-xs sm:text-sm flex-shrink-0"
             title="Download summary"
           >
-            <option value="" disabled>Download</option>
-            <option value="txt">Text</option>
-            <option value="md">Markdown</option>
-            <option value="pdf">PDF</option>
-            <option value="docx">Word</option>
-          </select>
+            <Download className="w-3 h-3 sm:w-4 sm:h-4" />
+            <span className="whitespace-nowrap">Download</span>
+          </button>
           
           <button
-            onClick={handleShare}
+            onClick={onShare}
             className="flex items-center space-x-1 px-2 py-1 sm:px-3 sm:py-1 bg-purple-500 text-white rounded hover:bg-purple-600 text-xs sm:text-sm flex-shrink-0"
             title="Share summary"
           >
@@ -187,7 +145,7 @@ export default function SummaryDisplay({
               <div className="min-h-0 flex-1">
                 <EnhancedEditor
                   initialContent={summary}
-                  documentId={sessionId}
+                  documentId="summary-document"
                   onContentChange={handleSummaryUpdate}
                   onSave={handleSummaryUpdate}
                 />

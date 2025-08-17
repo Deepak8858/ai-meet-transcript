@@ -287,7 +287,7 @@ export default function Home() {
           <div className="space-y-4 sm:space-y-6 min-h-0">
             <SummaryDisplay
               summary={summary}
-              onEdit={setSummary}
+             onEdit={setSummary}
               onDownload={handleDownload}
               onShare={() => setShowEmailForm(true)}
               isLoading={isLoading}
